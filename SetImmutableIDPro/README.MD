@@ -61,15 +61,15 @@ Run the script from a PowerShell console as an administrator. Use parameters to 
 
 ### Basic Example
 Match a single user and preview changes:
-- Run: .\MatchImmutableId.ps1 -User "fsilva@camillus.org" -DryRun $true
+- Run: .\MatchImmutableId.ps1 -User "jdoe@contoso.com" -DryRun $true
 
 ### Automatic Conflict Resolution
 Move conflicting proxyAddresses automatically:
-- Run: .\MatchImmutableId.ps1 -User "fsilva@camillus.org" -AutoMoveProxyConflicts -DryRun $true
+- Run: .\MatchImmutableId.ps1 -User "jdoe@contoso.com" -AutoMoveProxyConflicts -DryRun $true
 
 ### Apply Changes
 Apply changes without dry run:
-- Run: .\MatchImmutableId.ps1 -User "fsilva@camillus.org" -DryRun $false
+- Run: .\MatchImmutableId.ps1 -User "jdoe@contoso.com" -DryRun $false
 
 ### Other Scopes
 - Group Members:
@@ -84,7 +84,7 @@ Apply changes without dry run:
 ### Parameters
 | Parameter                | Description                                                                 | Required | Default          |
 |--------------------------|-----------------------------------------------------------------------------|----------|------------------|
-| -User <string>           | UPN of a single user (e.g., fsilva@camillus.org).                          | Yes*     | None             |
+| -User <string>           | UPN of a single user (e.g., jdoe@contoso.com).                          | Yes*     | None             |
 | -Group <string>          | AD group name for members (e.g., SyncUsers).                               | Yes*     | None             |
 | -OU <string>             | AD OU (e.g., OU=Users,DC=contoso,DC=com).                                 | Yes*     | None             |
 | -CSV <string>            | CSV file path with UPN column (e.g., C:\Scripts\Users.csv).                | Yes*     | None             |
@@ -102,8 +102,8 @@ Apply changes without dry run:
 For -CSV:
 
 UPN
-fsilva@camillus.org
-jdoe@camillus.org
+jdoe@contoso.com
+jdoe1@contoso.com
 
 
 ### Color-Coded Output
@@ -120,8 +120,8 @@ Log files are plain text.
 ## Conflict Resolution
 For duplicate proxyAddresses:
 - Default (Prompt):
-  - Example: Conflict: ProxyAddress smtp:fsilva_alias@camillus.org is in use by jdoe@camillus.org (CN=John Doe,OU=Users,DC=contoso,DC=com). [Magenta]
-  - Prompt: Do you want to remove it from this user and add it to fsilva@camillus.org? (Y/N) [Cyan]
+  - Example: Conflict: ProxyAddress smtp:jdoe_alias@contoso.com is in use by jdoe@contoso.com (CN=John Doe,OU=Users,DC=contoso,DC=com). [Magenta]
+  - Prompt: Do you want to remove it from this user and add it to jdoe@contoso.com? (Y/N) [Cyan]
   - Y moves the address; other inputs skip it.
 - Automatic (-AutoMoveProxyConflicts):
   - Moves the address without prompting.
@@ -131,24 +131,24 @@ For duplicate proxyAddresses:
 ## Validation
 After running the script:
 - Check AD proxyAddresses:
-  - Run: Get-ADUser -Filter "userPrincipalName -eq 'fsilva@camillus.org'" -Properties proxyAddresses | Select-Object -ExpandProperty proxyAddresses
+  - Run: Get-ADUser -Filter "userPrincipalName -eq 'jdoe@contoso.com'" -Properties proxyAddresses | Select-Object -ExpandProperty proxyAddresses
 - Check Conflicting User’s proxyAddresses (if moved):
-  - Run: Get-ADUser -Filter "userPrincipalName -eq 'jdoe@camillus.org'" -Properties proxyAddresses | Select-Object -ExpandProperty proxyAddresses
+  - Run: Get-ADUser -Filter "userPrincipalName -eq 'jdoe@contoso.com'" -Properties proxyAddresses | Select-Object -ExpandProperty proxyAddresses
 - Verify Entra ID ImmutableId:
   - Run: Connect-MgGraph -Scopes "User.Read.All"
-  - Run: Get-MgUser -UserId "fsilva@camillus.org" -Property ImmutableId
-  - Run: $adUser = Get-ADUser -Filter "userPrincipalName -eq 'fsilva@camillus.org'" -Properties objectGUID
+  - Run: Get-MgUser -UserId "jdoe@contoso.com" -Property ImmutableId
+  - Run: $adUser = Get-ADUser -Filter "userPrincipalName -eq 'jdoe@contoso.com'" -Properties objectGUID
   - Run: [Convert]::ToBase64String($adUser.objectGUID.ToByteArray())
 
 ## Troubleshooting
 1. User Not Found:
-   - Run: Get-ADUser -Filter "userPrincipalName -eq 'fsilva@camillus.org'"
-   - Run: Get-MgUser -Filter "userPrincipalName eq 'fsilva@camillus.org'"
+   - Run: Get-ADUser -Filter "userPrincipalName -eq 'jdoe@contoso.com'"
+   - Run: Get-MgUser -Filter "userPrincipalName eq 'jdoe@contoso.com'"
 
 2. AD Connectivity:
    - Run: nltest /dsgetdc:$env:USERDNSDOMAIN
    - Specify -ADServer if needed:
-     - Run: .\MatchImmutableId.ps1 -User "fsilva@camillus.org" -ADServer "dc01.camillus.org"
+     - Run: .\MatchImmutableId.ps1 -User "jdoe@contoso.com" -ADServer "dc01.contoso.com"
 
 3. Permission Errors:
    - Run: whoami /all
@@ -162,8 +162,8 @@ After running the script:
 
 5. Conflicts:
    - Manually resolve:
-     - Run: $conflictingUser = Get-ADUser -Filter "userPrincipalName -eq 'jdoe@camillus.org'" -Properties proxyAddresses
-     - Run: $conflictingUser.proxyAddresses.Remove("smtp:fsilva_alias@camillus.org")
+     - Run: $conflictingUser = Get-ADUser -Filter "userPrincipalName -eq 'jdoe@contoso.com'" -Properties proxyAddresses
+     - Run: $conflictingUser.proxyAddresses.Remove("smtp:jdoe_alias@contoso.com")
      - Run: Set-ADUser -Identity $conflictingUser -Replace @{proxyAddresses=$conflictingUser.proxyAddresses}
 
 6. Logs:
